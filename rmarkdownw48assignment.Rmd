@@ -1,0 +1,116 @@
+---
+title: "Week 48 Assignment"
+author: "Mark Nickelsen"
+date: "2022-12-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(error = TRUE)
+```
+Run
+```{r startup, include=FALSE}
+library(leaflet)
+library(htmlwidgets)
+```
+
+Read the csv file
+```{r Reading csv file, include=TRUE}
+SuperligaStadiums <- read.csv("data/SuperligaStadiums.csv")
+```
+## Task 1 and 2. Visualizing The Superliga Stadiums on a Map
+
+```{r Visualization, include=TRUE}
+Denmark <- leaflet() %>%   # assign the base location to an object
+  setView(10.5, 56, zoom = 6)
+
+# Now, prepare to select backgrounds
+esri <- grep("^Esri", providers, value = TRUE)
+
+for (provider in esri) {
+  Denmark <- Denmark %>% addProviderTiles(provider, group = provider)
+  
+}
+
+DANmap <- Denmark %>%
+  addLayersControl(baseGroups = names(esri),
+                   options = layersControlOptions(collapsed = FALSE)) %>%
+  addMiniMap(tiles = esri[[1]], toggleDisplay = TRUE,
+             position = "bottomright") %>%
+  addMeasure(
+    position = "bottomleft",
+    primaryLengthUnit = "meters",
+    primaryAreaUnit = "sqmeters",
+    activeColor = "#3D535D",
+    completedColor = "#7D4479") %>% 
+  htmlwidgets::onRender("
+                        function(el, x) {
+                        var myMap = this;
+                        myMap.on('baselayerchange',
+                        function (e) {
+                        myMap.minimap.changeLayer(L.tileLayer.provider(e.name));
+                        })
+                        }") %>% 
+  addControl("", position = "topright")
+
+DANmap
+```
+
+
+Now we diplay the map and input the markers
+
+```{r input markers, include=TRUE}
+StadiumMap<-DANmap %>% 
+  addMarkers(lng = SuperligaStadiums$Longitude, 
+             lat = SuperligaStadiums$Latitude,
+             popup = SuperligaStadiums$Description)
+
+
+StadiumMap
+```
+
+## Task 3: Can you cluster the points in Leaflet? Google "clustering options in Leaflet"
+
+To Cluster the markers, we add the cluster command to the previous command
+
+```{r Clustering, include=TRUE}
+StadiumMap<-DANmap %>% 
+  addMarkers(lng = SuperligaStadiums$Longitude, 
+             lat = SuperligaStadiums$Latitude,
+             popup = SuperligaStadiums$Description,
+             clusterOptions=markerClusterOptions())
+
+
+StadiumMap
+```
+
+
+## Task 4: Look at the map and consider what it is good for and what not.
+As we can see, Clustering help us organize our map markers, which is especially noticeable stadiums around Copenhagen
+
+## Task 5: Find out how to display notes and classifications in the map.
+
+Since my document dont have note and classifications, i here instead use the label
+command to display the Superliga stadium placenames
+
+```{r Labeling, include=TRUE}
+StadiumMap<-DANmap %>% 
+  addMarkers(lng = SuperligaStadiums$Longitude, 
+             lat = SuperligaStadiums$Latitude,
+             popup = SuperligaStadiums$Description,
+             clusterOptions=markerClusterOptions(),
+             label = SuperligaStadiums$Placename)
+StadiumMap
+```
+
+Now we can hover the mouse above the Markers and see the Stadium names
+
+
+
+
+
+
